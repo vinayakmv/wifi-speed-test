@@ -13,8 +13,8 @@
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f8fb;
-      color: #333;
+      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -24,7 +24,7 @@
 
     h1 {
       margin-bottom: 20px;
-      color: #2c3e50;
+      color: #fff;
     }
 
     .speed-box {
@@ -34,29 +34,30 @@
     }
 
     .speed {
-      background: white;
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 12px;
       padding: 20px 40px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       text-align: center;
-      width: 140px;
+      width: 160px;
+      backdrop-filter: blur(10px);
     }
 
     .speed .label {
       font-size: 16px;
       margin-bottom: 10px;
-      color: #555;
+      color: #f0f0f0;
     }
 
     .speed .value {
-      font-size: 22px;
+      font-size: 26px;
       font-weight: bold;
-      color: #2d3436;
+      color: #fff;
     }
 
     button {
       padding: 12px 24px;
-      background-color: #007bff;
+      background-color: #ff6b6b;
       color: white;
       border: none;
       border-radius: 8px;
@@ -66,13 +67,13 @@
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: #ee5253;
     }
 
     footer {
       margin-top: 40px;
       font-size: 12px;
-      color: #aaa;
+      color: #f8f8f8;
     }
   </style>
 </head>
@@ -123,35 +124,34 @@
       xhr.send();
     }
 
-    function testUploadSpeed() {
-      const uploadSize = 2 * 1024 * 1024; // 2 MB
-      const data = new Uint8Array(uploadSize);
-      const start = performance.now();
+function testUploadSpeed() {
+  const uploadSize = 2 * 1024 * 1024; // 2MB
+  const data = new Blob([new ArrayBuffer(uploadSize)]);
+  const startTime = performance.now();
 
-      fetch("https://postman-echo.com/post", {
-        method: "POST",
-        body: data,
-        headers: {
-          "Content-Type": "application/octet-stream"
-        }
-      })
-      .then(() => {
-        const duration = (performance.now() - start) / 1000;
-        const speedBps = (uploadSize * 8) / duration;
-        const speedMbps = speedBps / 1024 / 1024;
-        updateSpeed("upload", speedMbps);
-      })
-      .catch((err) => {
-        console.error("Upload test failed:", err);
-        updateSpeed("upload", 0);
-      });
-    }
+  fetch("https://httpbin.org/post", {
+    method: "POST",
+    body: data,
+  })
+    .then(() => {
+      const endTime = performance.now();
+      const duration = (endTime - startTime) / 1000;
+      const bitsSent = uploadSize * 8;
+      const speedMbps = bitsSent / duration / 1024 / 1024;
+      updateSpeed("upload", speedMbps);
+    })
+    .catch((err) => {
+      console.error("Upload test failed:", err);
+      updateSpeed("upload", 0);
+    });
+}
+
 
     function startTest() {
       updateSpeed("download", 0);
       updateSpeed("upload", 0);
       testDownloadSpeed();
-      setTimeout(testUploadSpeed, 1000); // slight delay to avoid overlap
+      setTimeout(testUploadSpeed, 1000);
     }
   </script>
 </body>
