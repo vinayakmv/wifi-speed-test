@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wi-Fi Speed Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    .speeds {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+    }
+    .speed-box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wi-Fi Speed Test</h1>
+  <div class="speeds">
+    <div class="speed-box">
+      <div>Download</div>
+      <div class="value" id="download">0 Mbps</div>
+    </div>
+    <div class="speed-box">
+      <div>Upload</div>
+      <div class="value" id="upload">0 Mbps</div>
+    </div>
+  </div>
+  <button onclick="startTest()">Start Test</button>
+
+  <script>
+    function updateSpeed(id, speed) {
+      document.getElementById(id).textContent = speed.toFixed(2) + " Mbps";
+    }
+
+    function testDownloadSpeed() {
+      const xhr = new XMLHttpRequest();
+      const size = 5 * 1024 * 1024;
+      const startTime = performance.now();
+      xhr.open("GET", "https://eu.httpbin.org/stream-bytes/5242880?seed=" + Date.now(), true);
+      xhr.responseType = "blob";
+      xhr.onload = () => {
+        const endTime = performance.now();
+        const duration = (endTime - startTime) / 1000;
+        const mbps = (size * 8) / duration / 1024 / 1024;
+        updateSpeed("download", mbps);
+      };
+      xhr.onerror = () => updateSpeed("download", 0);
+      xhr.send();
+    }
+
+    function testUploadSpeed() {
+      const data = new Uint8Array(2 * 1024 * 1024);
+      const startTime = performance.now();
+      fetch("https://postman-echo.com/post", {
+        method: "POST",
+        body: data
+      })
+      .then(res => res.json())
+      .then(() => {
+        const endTime = performance.now();
+        const duration = (endTime - startTime) / 1000;
+        const mbps = (data.length * 8) / duration / 1024 / 1024;
+        updateSpeed("upload", mbps);
+      })
+      .catch(() => updateSpeed("upload", 0));
+    }
+
+    function startTest() {
+      updateSpeed("download", 0);
+      updateSpeed("upload", 0);
+      testDownloadSpeed();
+      setTimeout(testUploadSpeed, 1000);
+    }
+  </script>
+</body>
+</html>
