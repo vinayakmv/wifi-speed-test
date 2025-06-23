@@ -1,100 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Wi-Fi Speed Test</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 24px;
-    }
-    .speeds {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f8fb;
+      color: #333;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 30px;
-      margin: 20px 0;
+      min-height: 100vh;
     }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
     .speed-box {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 30px;
+    }
+
+    .speed {
       background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 20px 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+      width: 140px;
     }
-    .value {
-      font-size: 20px;
+
+    .speed .label {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+
+    .speed .value {
+      font-size: 22px;
       font-weight: bold;
+      color: #2d3436;
     }
+
     button {
-      padding: 10px 20px;
-      background: #007bff;
+      padding: 12px 24px;
+      background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
-  <h1>Wi-Fi Speed Test</h1>
-  <div class="speeds">
-    <div class="speed-box">
-      <div>Download</div>
-      <div class="value" id="download">0 Mbps</div>
+
+  <h1>🚀 Wi-Fi Speed Test</h1>
+
+  <div class="speed-box">
+    <div class="speed">
+      <div class="label">Download</div>
+      <div class="value" id="download">0.00 Mbps</div>
     </div>
-    <div class="speed-box">
-      <div>Upload</div>
-      <div class="value" id="upload">0 Mbps</div>
+    <div class="speed">
+      <div class="label">Upload</div>
+      <div class="value" id="upload">0.00 Mbps</div>
     </div>
   </div>
+
   <button onclick="startTest()">Start Test</button>
 
+  <footer>© 2025 Wi-Fi Speed Tester</footer>
+
   <script>
-    function updateSpeed(id, speed) {
-      document.getElementById(id).textContent = speed.toFixed(2) + " Mbps";
+    function updateSpeed(type, speed) {
+      document.getElementById(type).textContent = speed.toFixed(2) + " Mbps";
     }
 
     function testDownloadSpeed() {
+      const fileSize = 5 * 1024 * 1024; // 5 MB
+      const start = performance.now();
+
       const xhr = new XMLHttpRequest();
-      const size = 5 * 1024 * 1024;
-      const startTime = performance.now();
-      xhr.open("GET", "https://eu.httpbin.org/stream-bytes/5242880?seed=" + Date.now(), true);
       xhr.responseType = "blob";
-      xhr.onload = () => {
-        const endTime = performance.now();
-        const duration = (endTime - startTime) / 1000;
-        const mbps = (size * 8) / duration / 1024 / 1024;
-        updateSpeed("download", mbps);
+      xhr.open("GET", "https://eu.httpbin.org/stream-bytes/5242880?seed=" + Date.now(), true);
+
+      xhr.onload = function () {
+        const duration = (performance.now() - start) / 1000;
+        const speedBps = (fileSize * 8) / duration;
+        const speedMbps = speedBps / 1024 / 1024;
+        updateSpeed("download", speedMbps);
       };
-      xhr.onerror = () => updateSpeed("download", 0);
+
+      xhr.onerror = function () {
+        console.error("Download test failed.");
+        updateSpeed("download", 0);
+      };
+
       xhr.send();
     }
 
     function testUploadSpeed() {
-      const data = new Uint8Array(2 * 1024 * 1024);
-      const startTime = performance.now();
+      const uploadSize = 2 * 1024 * 1024; // 2 MB
+      const data = new Uint8Array(uploadSize);
+      const start = performance.now();
+
       fetch("https://postman-echo.com/post", {
         method: "POST",
-        body: data
+        body: data,
+        headers: {
+          "Content-Type": "application/octet-stream"
+        }
       })
-      .then(res => res.json())
       .then(() => {
-        const endTime = performance.now();
-        const duration = (endTime - startTime) / 1000;
-        const mbps = (data.length * 8) / duration / 1024 / 1024;
-        updateSpeed("upload", mbps);
+        const duration = (performance.now() - start) / 1000;
+        const speedBps = (uploadSize * 8) / duration;
+        const speedMbps = speedBps / 1024 / 1024;
+        updateSpeed("upload", speedMbps);
       })
-      .catch(() => updateSpeed("upload", 0));
+      .catch((err) => {
+        console.error("Upload test failed:", err);
+        updateSpeed("upload", 0);
+      });
     }
 
     function startTest() {
       updateSpeed("download", 0);
       updateSpeed("upload", 0);
       testDownloadSpeed();
-      setTimeout(testUploadSpeed, 1000);
+      setTimeout(testUploadSpeed, 1000); // slight delay to avoid overlap
     }
   </script>
 </body>
