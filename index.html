@@ -125,26 +125,31 @@
     }
 
 function testUploadSpeed() {
-  const uploadSize = 2 * 1024 * 1024; // 2MB
-  const data = new Blob([new ArrayBuffer(uploadSize)]);
+  const uploadSize = 5 * 1024 * 1024; // increase to 5MB for better accuracy
+  const data = new Uint8Array(uploadSize);
   const startTime = performance.now();
 
   fetch("https://httpbin.org/post", {
     method: "POST",
     body: data,
+    headers: {
+      "Content-Type": "application/octet-stream"
+    }
   })
-    .then(() => {
-      const endTime = performance.now();
-      const duration = (endTime - startTime) / 1000;
-      const bitsSent = uploadSize * 8;
-      const speedMbps = bitsSent / duration / 1024 / 1024;
-      updateSpeed("upload", speedMbps);
-    })
-    .catch((err) => {
-      console.error("Upload test failed:", err);
-      updateSpeed("upload", 0);
-    });
+  .then((res) => {
+    if (!res.ok) throw new Error("Server error");
+    const endTime = performance.now();
+    const duration = (endTime - startTime) / 1000;
+    const bitsSent = uploadSize * 8;
+    const speedMbps = bitsSent / duration / 1024 / 1024;
+    updateSpeed("upload", speedMbps);
+  })
+  .catch((err) => {
+    console.error("Upload test failed:", err.message);
+    updateSpeed("upload", 0);
+  });
 }
+
 
 
     function startTest() {
